@@ -11,12 +11,12 @@ std::string nettoyerEntree(const std::string& operation) {
     return resultat;
 }
 
-// Vérifie si un caractère est un chiffre
+// Vérifie si est un chiffre
 bool isDigit(char c) {
     return c >= '0' && c <= '9';
 }
 
-// Calcule la longueur d'une chaîne (alternative à str.length())
+// Calcule la longueur d'une chaîne
 int Longueur(const std::string& str) {
     int length = 0;
     while (str[length] != '\0') {
@@ -25,7 +25,7 @@ int Longueur(const std::string& str) {
     return length;
 }
 
-// Extrait une sous-chaîne à partir d'une position
+// Extrait une sous-chaîne
 std::string extraireChaine(const std::string& str, int& position, int longueur) {
     std::string result = "";
     for (int i = 0; i < longueur && position < Longueur(str); ++i) {
@@ -34,7 +34,7 @@ std::string extraireChaine(const std::string& str, int& position, int longueur) 
     return result;
 }
 
-// Analyse les nombres (y compris les flottants)
+// Analyse les nombres (flotants)
 double AnalyseNombre(const std::string& operation, int& position) {
     double result = 0.0;
     bool decimal = false;
@@ -54,18 +54,17 @@ double AnalyseNombre(const std::string& operation, int& position) {
     return result;
 }
 
-// Analyse les fonctions trigonométriques, logarithmiques, exponentielles
+// Fonctions trigonométriques, logarithmiques, exponentielles
 double AnalyseFonction(const std::string& operation, int& position) {
     std::string fonction = extraireChaine(operation, position, 3);
 
     if (fonction == "cos" || fonction == "sin" || fonction == "log" || fonction == "exp") {
         if (position < Longueur(operation) && operation[position] == '(') {
-            ++position; // Passe la parenthèse ouvrante
+            ++position;
             double result = completeOperation(operation, position);
             if (position < Longueur(operation) && operation[position] == ')') {
-                ++position; // Passe la parenthèse fermante
-                if (fonction == "cos") return cos(result * (M_PI / 180.0)); // En radians
-                if (fonction == "sin") return sin(result * (M_PI / 180.0)); // En radians
+                if (fonction == "cos") return cos(result * (M_PI / 180.0));
+                if (fonction == "sin") return sin(result * (M_PI / 180.0));
                 if (fonction == "log") {
                     if (result <= 0) throw std::domain_error("Logarithme négatif ou nul.");
                     return log(result);
@@ -81,7 +80,7 @@ double AnalyseFonction(const std::string& operation, int& position) {
     return AnalyseNombre(operation, position);
 }
 
-// Complète une opération (gère les parenthèses ou les fonctions)
+// les parenthèses ou les fonctions
 double completeOperation(const std::string& operation, int& position) {
     if (position < Longueur(operation) && operation[position] == '(') {
         ++position;
@@ -99,7 +98,7 @@ double completeOperation(const std::string& operation, int& position) {
     }
 }
 
-// Analyse les termes (multiplication/division)
+// multiplication/division
 double AnalyseTerme(const std::string& operation, int& position) {
     double result = completeOperation(operation, position);
     while (position < Longueur(operation)) {
@@ -118,7 +117,7 @@ double AnalyseTerme(const std::string& operation, int& position) {
     return result;
 }
 
-// Analyse une opération complète (addition/soustraction)
+// addition/soustraction
 double AnalyseOperation(const std::string& operation, int& position) {
     double result = AnalyseTerme(operation, position);
     while (position < Longueur(operation)) {
