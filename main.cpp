@@ -24,6 +24,9 @@ int main() {
             if (choice == 'n') {
                 break;
             }
+            else{
+                clear();
+            }
         } catch (...) {
             std::cout << "Error: Operation invalide" << std::endl;
         }

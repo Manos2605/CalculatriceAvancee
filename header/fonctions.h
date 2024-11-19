@@ -16,5 +16,6 @@ double AnalyseTerme(const std::string& operation, int& posistion);
 double completeOperation(const std::string& operation, int& posistion);
 double AnalyseNumber(const std::string& operation, int& posistion);
 double AnalyseFonction(const std::string& operation, int& position);
+void clear();
 
 #endif

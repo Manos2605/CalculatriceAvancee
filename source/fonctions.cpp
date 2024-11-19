@@ -133,3 +133,12 @@ double AnalyseOperation(const std::string& operation, int& position) {
     }
     return result;
 }
+
+// Nettoie le terminal
+void clear() {
+    #ifdef _WIN32
+        system("cls");
+    #else 
+        system("clear");
+    #endif
+}
