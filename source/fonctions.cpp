@@ -1,14 +1,14 @@
 #include "../header/fonctions.h"
 
 // Vérifie si un caractère est un chiffre (de '0' à '9')
-bool isNumerique(char c) {
+bool isDigit(char c) {
     return (c >= '0' && c <= '9');
 }
 
 // Calcule et retourne la longueur d'une chaîne
 int Longueur(const std::string& str) {
     int length = 0;
-    while (str[length] != '\0') { 
+    while (str[length] != '\0') {
         ++length;
     }
     return length;
@@ -24,48 +24,46 @@ std::string extraireChaine(const std::string& str, int& position, int longueur) 
 }
 
 // Analyse les opérations de base addition, soustraction et les parenthèses
-double AnalyseOperation(const std::string& operation, int& position) {
-    if (position < Longueur(operation) && operation[position] == '(') {
-        ++position;
-        double result = completeOperation(operation, position);
-        if (position < Longueur(operation) && operation[position] == ')') {
-            ++position;
+double completeOperation(const std::string& operation, int& posistion) {
+    if (posistion < Longueur(operation) && operation[posistion] == '(') {
+        ++posistion;
+        double result = AnalyseOperation(operation, posistion);
+        if (posistion < Longueur(operation) && operation[posistion] == ')') {
+            ++posistion;
         }
         return result;
     } else {
-        return AnalyseNumber(operation, position);
+        return AnalyseNumber(operation, posistion);
     }
 }
 
 // Analyse les termes d'une opération multiplication, division
-double AnalyseTerme(const std::string& operation, int& position) {
-    double result = AnalyseOperation(operation, position);
-    while (position < Longueur(operation)) {
-        if (operation[position] == '*') {
-            ++position;
-            result *= AnalyseOperation(operation, position);
-        } else if (operation[position] == '/') {
-            ++position;
-            result /= AnalyseOperation(operation, position);
-        } else if (operation[position] == '+' || operation[position] == '-') {
-            break;
+double AnalyseTerme(const std::string& operation, int& posistion) {
+    double result = completeOperation(operation, posistion);
+    while (posistion < Longueur(operation)) {
+        if (operation[posistion] == '*') {
+            ++posistion;
+            result *= completeOperation(operation, posistion);
+        } else if (operation[posistion] == '/') {
+            ++posistion;
+            result /= completeOperation(operation, posistion);
         } else {
-            result = AnalyseFonction(operation, position);
+            break;
         }
     }
     return result;
 }
 
 // Analyse une expression complète
-double completeOperation(const std::string& operation, int& position) {
-    double result = AnalyseTerme(operation, position);
-    while (position < Longueur(operation)) {
-        if (operation[position] == '+') {
-            ++position;
-            result += AnalyseTerme(operation, position);
-        } else if (operation[position] == '-') {
-            ++position;
-            result -= AnalyseTerme(operation, position);
+double AnalyseOperation(const std::string& operation, int& posistion) {
+    double result = AnalyseTerme(operation, posistion);
+    while (posistion < Longueur(operation)) {
+        if (operation[posistion] == '+') {
+            ++posistion;
+            result += AnalyseTerme(operation, posistion);
+        } else if (operation[posistion] == '-') {
+            ++posistion;
+            result -= AnalyseTerme(operation, posistion);
         } else {
             break;
         }
@@ -74,21 +72,21 @@ double completeOperation(const std::string& operation, int& position) {
 }
 
 // Analyse les nombres à virgule flottante
-double AnalyseNumber(const std::string& operation, int& position) {
+double AnalyseNumber(const std::string& operation, int& posistion) {
     double result = 0.0;
     bool decimalPoint = false;
     double decimalPlace = 0.1;
 
-    while (position < Longueur(operation) && (isNumerique(operation[position]) || operation[position] == '.')) {
-        if (operation[position] == '.') {
+    while (posistion < Longueur(operation) && (isDigit(operation[posistion]) || operation[posistion] == '.')) {
+        if (operation[posistion] == '.') {
             decimalPoint = true;
         } else if (!decimalPoint) {
-            result = result * 10 + (operation[position] - '0');
+            result = result * 10 + (operation[posistion] - '0');
         } else {
-            result += (operation[position] - '0') * decimalPlace;
+            result += (operation[posistion] - '0') * decimalPlace;
             decimalPlace /= 10;
         }
-        ++position;
+        ++posistion;
     }
     return result;
 }
