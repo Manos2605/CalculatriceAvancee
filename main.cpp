@@ -2,6 +2,11 @@
 #include "header/fonctions.h"
 #include "header/formes.h"
 
+double analyser(const std::string& operation) {
+    std::string cleanedOperation = nettoyerEntree(operation);
+    int position = 0;
+    return AnalyseOperation(cleanedOperation, position);
+}
 
 int main() {
     while (true){
@@ -11,8 +16,8 @@ int main() {
         std::cin >> operation;
         int posistion = 0;
         try {
-            double result = AnalyseOperation(operation, posistion);
-            std::cout << "Result: " << result << std::endl;
+            double resultat = analyser(operation);
+            std::cout << "Result: " << resultat << std::endl;
             std::cout << "Voulez-vous effectuer une autre operation? (o/n): ";
             char choice;
             std::cin >> choice;

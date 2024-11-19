@@ -1,11 +1,22 @@
 #include "../header/fonctions.h"
 
-// Vérifie si un caractère est un chiffre (de '0' à '9')
-bool isDigit(char c) {
-    return (c >= '0' && c <= '9');
+// Supprime les espaces
+std::string nettoyerEntree(const std::string& operation) {
+    std::string resultat = "";
+    for (char c : operation) {
+        if (!isspace(c)) {
+            resultat += c;
+        }
+    }
+    return resultat;
 }
 
-// Calcule et retourne la longueur d'une chaîne
+// Vérifie si un caractère est un chiffre
+bool isDigit(char c) {
+    return c >= '0' && c <= '9';
+}
+
+// Calcule la longueur d'une chaîne (alternative à str.length())
 int Longueur(const std::string& str) {
     int length = 0;
     while (str[length] != '\0') {
@@ -14,7 +25,7 @@ int Longueur(const std::string& str) {
     return length;
 }
 
-// Fonction pour extraire une sous-chaine
+// Extrait une sous-chaîne à partir d'une position
 std::string extraireChaine(const std::string& str, int& position, int longueur) {
     std::string result = "";
     for (int i = 0; i < longueur && position < Longueur(str); ++i) {
@@ -23,30 +34,83 @@ std::string extraireChaine(const std::string& str, int& position, int longueur) 
     return result;
 }
 
-// Analyse les opérations de base addition, soustraction et les parenthèses
-double completeOperation(const std::string& operation, int& posistion) {
-    if (posistion < Longueur(operation) && operation[posistion] == '(') {
-        ++posistion;
-        double result = AnalyseOperation(operation, posistion);
-        if (posistion < Longueur(operation) && operation[posistion] == ')') {
-            ++posistion;
+// Analyse les nombres (y compris les flottants)
+double AnalyseNombre(const std::string& operation, int& position) {
+    double result = 0.0;
+    bool decimal = false;
+    double factor = 0.1;
+
+    while (position < Longueur(operation) && (isDigit(operation[position]) || operation[position] == '.')) {
+        if (operation[position] == '.') {
+            decimal = true;
+        } else if (decimal) {
+            result += (operation[position] - '0') * factor;
+            factor *= 0.1;
+        } else {
+            result = result * 10 + (operation[position] - '0');
+        }
+        ++position;
+    }
+    return result;
+}
+
+// Analyse les fonctions trigonométriques, logarithmiques, exponentielles
+double AnalyseFonction(const std::string& operation, int& position) {
+    std::string fonction = extraireChaine(operation, position, 3);
+
+    if (fonction == "cos" || fonction == "sin" || fonction == "log" || fonction == "exp") {
+        if (position < Longueur(operation) && operation[position] == '(') {
+            ++position; // Passe la parenthèse ouvrante
+            double result = completeOperation(operation, position);
+            if (position < Longueur(operation) && operation[position] == ')') {
+                ++position; // Passe la parenthèse fermante
+                if (fonction == "cos") return cos(result * (M_PI / 180.0)); // En radians
+                if (fonction == "sin") return sin(result * (M_PI / 180.0)); // En radians
+                if (fonction == "log") {
+                    if (result <= 0) throw std::domain_error("Logarithme négatif ou nul.");
+                    return log(result);
+                }
+                if (fonction == "exp") return exp(result);
+            } else {
+                throw std::invalid_argument("Parenthèse fermante manquante pour " + fonction);
+            }
+        } else {
+            throw std::invalid_argument("Parenthèse ouvrante manquante pour " + fonction);
+        }
+    }
+    return AnalyseNombre(operation, position);
+}
+
+// Complète une opération (gère les parenthèses ou les fonctions)
+double completeOperation(const std::string& operation, int& position) {
+    if (position < Longueur(operation) && operation[position] == '(') {
+        ++position;
+        double result = AnalyseOperation(operation, position);
+        if (position < Longueur(operation) && operation[position] == ')') {
+            ++position;
+        } else {
+            throw std::invalid_argument("Parenthèse fermante manquante.");
         }
         return result;
+    } else if (isalpha(operation[position])) {
+        return AnalyseFonction(operation, position);
     } else {
-        return AnalyseNumber(operation, posistion);
+        return AnalyseNombre(operation, position);
     }
 }
 
-// Analyse les termes d'une opération multiplication, division
-double AnalyseTerme(const std::string& operation, int& posistion) {
-    double result = completeOperation(operation, posistion);
-    while (posistion < Longueur(operation)) {
-        if (operation[posistion] == '*') {
-            ++posistion;
-            result *= completeOperation(operation, posistion);
-        } else if (operation[posistion] == '/') {
-            ++posistion;
-            result /= completeOperation(operation, posistion);
+// Analyse les termes (multiplication/division)
+double AnalyseTerme(const std::string& operation, int& position) {
+    double result = completeOperation(operation, position);
+    while (position < Longueur(operation)) {
+        if (operation[position] == '*') {
+            ++position;
+            result *= completeOperation(operation, position);
+        } else if (operation[position] == '/') {
+            ++position;
+            double divisor = completeOperation(operation, position);
+            if (divisor == 0) throw std::domain_error("Division par zéro.");
+            result /= divisor;
         } else {
             break;
         }
@@ -54,16 +118,16 @@ double AnalyseTerme(const std::string& operation, int& posistion) {
     return result;
 }
 
-// Analyse une expression complète
-double AnalyseOperation(const std::string& operation, int& posistion) {
-    double result = AnalyseTerme(operation, posistion);
-    while (posistion < Longueur(operation)) {
-        if (operation[posistion] == '+') {
-            ++posistion;
-            result += AnalyseTerme(operation, posistion);
-        } else if (operation[posistion] == '-') {
-            ++posistion;
-            result -= AnalyseTerme(operation, posistion);
+// Analyse une opération complète (addition/soustraction)
+double AnalyseOperation(const std::string& operation, int& position) {
+    double result = AnalyseTerme(operation, position);
+    while (position < Longueur(operation)) {
+        if (operation[position] == '+') {
+            ++position;
+            result += AnalyseTerme(operation, position);
+        } else if (operation[position] == '-') {
+            ++position;
+            result -= AnalyseTerme(operation, position);
         } else {
             break;
         }
@@ -71,48 +135,3 @@ double AnalyseOperation(const std::string& operation, int& posistion) {
     return result;
 }
 
-// Analyse les nombres à virgule flottante
-double AnalyseNumber(const std::string& operation, int& posistion) {
-    double result = 0.0;
-    bool decimalPoint = false;
-    double decimalPlace = 0.1;
-
-    while (posistion < Longueur(operation) && (isDigit(operation[posistion]) || operation[posistion] == '.')) {
-        if (operation[posistion] == '.') {
-            decimalPoint = true;
-        } else if (!decimalPoint) {
-            result = result * 10 + (operation[posistion] - '0');
-        } else {
-            result += (operation[posistion] - '0') * decimalPlace;
-            decimalPlace /= 10;
-        }
-        ++posistion;
-    }
-    return result;
-}
-
-// trigonométriques
-double AnalyseFonction(const std::string& operation, int& position) {
-    if (position + 3 <= Longueur(operation) && extraireChaine(operation, position, 3) == "cos") {
-        position += 3;
-        if (position < Longueur(operation) && operation[position] == '(') {
-            ++position;
-            double result = completeOperation(operation, position);
-            if (position < Longueur(operation) && operation[position] == ')') {
-                ++position;
-                return cos(result * (M_PI / 180.0));
-            }
-        }
-    } else if (position + 3 <= Longueur(operation) && extraireChaine(operation, position, 3) == "sin") {
-        position += 3;
-        if (position < Longueur(operation) && operation[position] == '(') {
-            ++position;
-            double result = completeOperation(operation, position);
-            if (position < Longueur(operation) && operation[position] == ')') {
-                ++position;
-                return sin(result * (M_PI / 180.0));
-            }
-        }
-    }
-    return AnalyseNumber(operation, position);
-}
