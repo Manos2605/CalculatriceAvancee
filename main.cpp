@@ -14,6 +14,9 @@ int main() {
         std::cout << "\nEntrer une operation: ";
         std::string operation;
         std::cin >> operation;
+        if (operation == "exit"){
+            break;
+        }
         int posistion = 0;
         try {
             double resultat = analyser(operation);
