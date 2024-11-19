@@ -133,4 +133,3 @@ double AnalyseOperation(const std::string& operation, int& position) {
     }
     return result;
 }
-
